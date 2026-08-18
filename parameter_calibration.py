@@ -1,15 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
 from __future__ import annotations
 
 import importlib.util
@@ -26,11 +14,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-
 _CPU_LOGICAL = max(1, os.cpu_count() or 16)
-
-
-
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _MAIN_PATH = os.path.join(_DIR, "historical_simulation.py")
@@ -45,14 +29,11 @@ def _load_main_module():
     spec.loader.exec_module(km)
     return km
 
-
 KM = _load_main_module()
-
 
 _WORKER_NT: Optional[Dict[int, Any]] = None
 _WORKER_MP: Optional[Dict[int, Dict[str, Any]]] = None
 _MC_PROCESS_POOL: Optional[ProcessPoolExecutor] = None
-
 
 _CALIB_LOCK = threading.Lock()
 
@@ -69,7 +50,6 @@ def _mp_init(
 
 
 def _mp_task(payload: Tuple[int, Dict[str, Any]]) -> List[Dict[str, Any]]:
-
     seed, fp_dict = payload
     if _WORKER_NT is None or _WORKER_MP is None:
         raise RuntimeError("Worker process failed to initialize _WORKER_NT / _WORKER_MP")
@@ -81,7 +61,6 @@ def mc_pool_scope(
     nodes_template: Dict[int, Any],
     monthly_params: Dict[int, Dict[str, Any]],
 ) -> Any:
-
     global _MC_PROCESS_POOL
     w = max(1, min(SIM_PARALLEL_WORKERS, N_SIM_RUNS_PER_EVAL))
     ex = ProcessPoolExecutor(
@@ -95,12 +74,6 @@ def mc_pool_scope(
     finally:
         ex.shutdown(wait=True)
         _MC_PROCESS_POOL = None
-
-
-
-
-
-
 
 REAL_MONTHLY_NEW_VACCINE = np.array(
     [
@@ -116,24 +89,18 @@ REAL_MONTHLY_NEW_VACCINE = np.array(
     dtype=float,
 )
 
-
 CALIB_ILI_CSV = os.path.join(_DIR, "data", "weekly_ili_historical_inputs.csv")
 
-
 FIXED_P_SINGLE_INFECTION = 0.10
-
 
 TARGET_PRIOR_RATIO_CHILD = 1.877
 TARGET_PRIOR_RATIO_ELDERLY = 14.6
 LAMBDA_PRIOR_PENALTY = 0.10
 
-
 N_SIM_RUNS_PER_EVAL = 3
 SIM_SEED_BASE = 424242
 
-
 SIM_PARALLEL_WORKERS = max(1, min(N_SIM_RUNS_PER_EVAL, _CPU_LOGICAL))
-
 
 PARAM_DIM = 19
 PARAM_BOUNDS_LOW = np.array(
@@ -164,17 +131,10 @@ GA_BLEND_ALPHA = 0.5
 GA_POPULATION_PARALLEL = 1
 GA_GENERATION_PRINT_INTERVAL = 5
 
-
 PROGRESS_EVAL_INTERVAL = 0
 
 
 def load_calibration_ili_24_vs_23(km: Any, csv_path: str) -> None:
-
-
-
-
-
-
     if not csv_path or not os.path.isfile(csv_path):
         raise FileNotFoundError(f"Calibration ILI file not found: {csv_path}")
 
@@ -237,7 +197,6 @@ def load_calibration_ili_24_vs_23(km: Any, csv_path: str) -> None:
 
 
 def make_monthly_params_fixed_pn(km: Any, p_n: float) -> Dict[int, Dict[str, Any]]:
-
     out = {}
     for m in range(1, km.SIMULATION_MONTHS + 1):
         d = dict(km.MONTHLY_PARAMS[m])
@@ -247,7 +206,6 @@ def make_monthly_params_fixed_pn(km: Any, p_n: float) -> Dict[int, Dict[str, Any
 
 
 def vector_to_formula_dict(vec: np.ndarray) -> Dict[str, Any]:
-
     vec = np.asarray(vec, dtype=float).ravel()
     if vec.size != PARAM_DIM:
         raise ValueError(f"Parameter vector length must be {PARAM_DIM}; received {vec.size}")
@@ -301,7 +259,6 @@ def prior_penalty(fp: Dict[str, Any]) -> float:
 
 
 def build_nodes_template(km: Any, seed: int = 42) -> Dict[int, Any]:
-
     rng = random.Random(seed)
     family_dist = km.calculate_family_distribution()
     nodes, child_indices, _, _, _ = km.create_node_network(family_dist, rng=rng)
@@ -345,7 +302,6 @@ def run_single_simulation(
 def monthly_new_vaccine_matrix(
     km: Any, all_ts: Sequence[List[Dict[str, Any]]]
 ) -> np.ndarray:
-
     inc = km.calculate_monthly_increments(list(all_ts), num_runs=len(all_ts))
     mat = np.zeros((km.SIMULATION_MONTHS, 3), dtype=float)
     for m in range(1, km.SIMULATION_MONTHS + 1):
@@ -359,7 +315,6 @@ def monthly_new_vaccine_matrix(
 
 
 def loss_rmse(pred: np.ndarray, real: np.ndarray, eps: float = 1e-9) -> float:
-
     scale = np.maximum(np.abs(real), eps)
     diff = (pred - real) / scale
     return float(np.sqrt(np.mean(diff ** 2)))
@@ -374,8 +329,6 @@ def _one_mc_run(
 ) -> List[Dict[str, Any]]:
     return run_single_simulation(km, nodes_template, monthly_params, fp, seed)
 
-
-
 _OPT_STATE = {
     "obj_calls": 0,
     "t_opt_start": 0.0,
@@ -385,7 +338,6 @@ _OPT_STATE = {
 
 
 def _print_ga_iteration_progress(iteration: int) -> None:
-
     global_best = float(_OPT_STATE.get("best_f", float("inf")))
     print(
         f"  Generation {iteration}/{GA_NGENERATIONS}, best loss so far={global_best:.6f}",
@@ -400,7 +352,6 @@ def _print_ga_iteration_progress(iteration: int) -> None:
 
 
 def _format_snapshot_best(vec: np.ndarray, loss: float, eval_idx: int) -> str:
-
     fp = vector_to_formula_dict(vec)
     vec_s = np.array2string(
         np.asarray(vec, dtype=float),
@@ -530,7 +481,6 @@ def _evaluate_population(
     monthly_params: Dict[int, Dict[str, Any]],
     target: np.ndarray,
 ) -> np.ndarray:
-
     n = len(population)
     fitness = np.empty(n, dtype=float)
     for i in range(n):
@@ -717,7 +667,6 @@ def main() -> None:
 
     print_results_for_manual_copy(KM, x_best, f_best)
 
-
     print("\nAdditional validation: repeating simulations in parallel with the best parameters and aggregating the prediction matrix...")
     KM.VACCINATION_FORMULA_PARAMS_CACHE = vector_to_formula_dict(x_best)
     seeds_verify = [SIM_SEED_BASE + i * 10007 for i in range(N_SIM_RUNS_PER_EVAL)]
@@ -730,7 +679,6 @@ def main() -> None:
     print(pred_mat)
     print("\nObserved target (8 × 3):")
     print(REAL_MONTHLY_NEW_VACCINE)
-
 
 if __name__ == "__main__" and current_process().name == "MainProcess":
     main()

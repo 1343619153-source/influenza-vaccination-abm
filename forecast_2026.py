@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
 try:
     from scipy import stats
 
@@ -23,13 +22,10 @@ except ImportError:
     HAS_SCIPY = False
     print("Warning: scipy is not installed; approximate t-distribution values will be used for confidence intervals")
 
-
-
 warnings.filterwarnings('ignore')
 
 plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
-
 
 SIMULATION_MONTHS = 8
 
@@ -136,22 +132,17 @@ def create_node_network(family_dist=None, rng=None):
     if rng is None:
         rng = random
 
-
     children_count = POPULATION_CONFIG['children_count']
     elderly_count = POPULATION_CONFIG['elderly_count']
 
-
     if family_dist is not None:
-
         parents_count = family_dist.get('parents_used', 0)
         singles_count = family_dist.get('singles_used', 0)
     else:
-
         if 'parents_count' in POPULATION_CONFIG and 'singles_count' in POPULATION_CONFIG:
             parents_count = POPULATION_CONFIG['parents_count']
             singles_count = POPULATION_CONFIG['singles_count']
         else:
-
             adults_count = POPULATION_CONFIG.get('adults_count', 0)
 
             parents_count = int(adults_count * 0.7)
@@ -159,10 +150,8 @@ def create_node_network(family_dist=None, rng=None):
 
     total_nodes = children_count + parents_count + singles_count + elderly_count
 
-
     nodes = {}
     node_id = 0
-
 
     child_indices = []
     for i in range(children_count):
@@ -176,7 +165,6 @@ def create_node_network(family_dist=None, rng=None):
         }
         child_indices.append(node_id)
         node_id += 1
-
 
     parent_indices = []
     parent_pairs = []
@@ -197,17 +185,13 @@ def create_node_network(family_dist=None, rng=None):
 
         node_id += 1
 
-
     family_id = 0
     for i, child_idx in enumerate(child_indices):
-
         if i < len(parent_pairs):
             nodes[child_idx]['family_id'] = family_id
             nodes[child_idx]['parents'] = [f'Father {family_id + 1}', f'Mother {family_id + 1}']
             family_id += 1
         else:
-
-
             max_attempts = len(parent_pairs) * 2
             attempts = 0
             assigned = False
@@ -226,7 +210,6 @@ def create_node_network(family_dist=None, rng=None):
                 nodes[child_idx]['family_id'] = assigned_family
                 nodes[child_idx]['parents'] = [f'Father {assigned_family + 1}', f'Mother {assigned_family + 1}']
 
-
     single_indices = []
     for i in range(singles_count):
         nodes[node_id] = {
@@ -238,7 +221,6 @@ def create_node_network(family_dist=None, rng=None):
         }
         single_indices.append(node_id)
         node_id += 1
-
 
     elderly_indices = []
     for i in range(elderly_count):
@@ -344,10 +326,8 @@ def add_company_connections(nodes, rng=None):
     if rng is None:
         rng = random
 
-
     adults = [node_id for node_id, node_info in nodes.items()
               if node_info['type'] in ['parent', 'single']]
-
 
     num_groups = NETWORK_CONFIG['num_work_groups']
     adults_per_group = len(adults) // num_groups
@@ -356,15 +336,12 @@ def add_company_connections(nodes, rng=None):
     for group_num in range(1, num_groups + 1):
         group_assignments.extend([group_num] * adults_per_group)
 
-
     rng.shuffle(group_assignments)
-
 
     for i, adult_id in enumerate(adults):
         group_num = group_assignments[i] if i < len(group_assignments) else rng.randint(1, num_groups)
         nodes[adult_id]['group'] = f'Group {group_num}'
         nodes[adult_id]['group_number'] = group_num
-
 
     company_adults = {}
     for node_id, node_info in nodes.items():
@@ -375,19 +352,15 @@ def add_company_connections(nodes, rng=None):
             company_adults[company].append(node_id)
 
     for company, adults in company_adults.items():
-
         for adult_id in adults:
-
             min_conn, max_conn = NETWORK_CONFIG['adults_connections']
             num_connections = rng.randint(min_conn, max_conn)
-
 
             other_adults = [a for a in adults if a != adult_id]
             if len(other_adults) >= num_connections:
                 connections = rng.sample(other_adults, num_connections)
             else:
                 connections = other_adults
-
 
             nodes[adult_id]['company_connections'] = connections
     return nodes
@@ -397,21 +370,17 @@ def add_elderly_connections(nodes, rng=None):
     if rng is None:
         rng = random
 
-
     elderly_nodes = [node_id for node_id, node_info in nodes.items() if node_info['type'] == 'elderly']
 
     for elderly_id in elderly_nodes:
-
         min_conn, max_conn = NETWORK_CONFIG['elderly_connections']
         num_connections = rng.randint(min_conn, max_conn)
-
 
         other_elderly = [e for e in elderly_nodes if e != elderly_id]
         if len(other_elderly) >= num_connections:
             connections = rng.sample(other_elderly, num_connections)
         else:
             connections = other_elderly
-
 
         nodes[elderly_id]['elderly_connections'] = connections
     return nodes
@@ -509,15 +478,12 @@ def get_daytime_connections(node_id, nodes):
     connections = []
 
     if node_info['type'] == 'child':
-
         if 'school_connections' in node_info:
             connections = node_info['school_connections']
     elif node_info['type'] in ['parent', 'single']:
-
         if 'company_connections' in node_info:
             connections = node_info['company_connections']
     elif node_info['type'] == 'elderly':
-
         if 'elderly_connections' in node_info:
             connections = node_info['elderly_connections']
 
@@ -528,15 +494,12 @@ def get_nighttime_connections(node_id, nodes):
     node_info = nodes[node_id]
     connections = []
 
-
     family_id = node_info.get('family_id')
 
     if family_id is not None:
-
         for other_id, other_info in nodes.items():
             if other_id != node_id and other_info.get('family_id') == family_id:
                 connections.append(other_id)
-
 
     return connections
 
@@ -613,7 +576,6 @@ def calculate_payoffs(nodes, is_daytime, month_params=None, step: int = 1):
     all_nodes = list(nodes.keys())
 
     for node_id in all_nodes:
-
         if is_daytime:
             connections = get_daytime_connections(node_id, nodes)
         else:
@@ -624,12 +586,10 @@ def calculate_payoffs(nodes, is_daytime, month_params=None, step: int = 1):
             nodes[node_id]['individual_payoff'] = 0
             continue
 
-
         N = len(connections)
         N_I = sum(1 for conn_id in connections if nodes[conn_id]['health_status'] == 'infected')
         N_V = sum(1 for conn_id in connections if nodes[conn_id]['health_status'] == 'vaccinated')
         N_R = 0
-
 
         infection_risk_connections = [
             conn_id for conn_id in connections if _can_receive_infection(nodes, conn_id, step)
@@ -638,13 +598,11 @@ def calculate_payoffs(nodes, is_daytime, month_params=None, step: int = 1):
         for conn_id in infection_risk_connections:
             sum_P_inf += calculate_neighbor_infection_probability(conn_id, nodes, month_params, step)
 
-
         C_I = COST_CONFIG['infection_cost']
         C_V = COST_CONFIG['vaccination_cost']
         C_R = COST_CONFIG['recovery_cost']
 
         group_payoff = -((N_I / N * C_I) + (N_V / N * C_V) + (C_I * sum_P_inf / N) + (N_R / N * C_R))
-
 
         if nodes[node_id]['health_status'] == 'vaccinated':
             individual_payoff = group_payoff - C_V
@@ -683,8 +641,6 @@ def day_index_from_step(step: int) -> int:
 def week_index_from_step(step: int) -> int:
     d = day_index_from_step(step)
     return (d - 1) // 7 + 1
-
-
 
 SIMULATION_EPI_WEEK_SEQUENCE = list(range(31, 53)) + list(range(1, 14))
 
@@ -764,7 +720,6 @@ def load_weekly_ili_caches():
 
     default_pos = float(ILI_CONFIG.get('default_weekly_positivity', 0.25))
 
-
     if df.shape[1] >= 9:
         rows_ordered = []
         for _, row in df.iterrows():
@@ -816,7 +771,6 @@ def load_weekly_ili_caches():
         VACCINATION_ILI_WEEKLY_LOOKUP_CACHE = lookup
         ILI_WEEKLY_CSV_LOAD_FAILED = False
         return
-
 
     weeks = []
     preds = []
@@ -1017,8 +971,6 @@ def representative_prior_vaccination_ratio(
         return float('inf') if p1 > 0 else 1.0
     return float(p1 / p0)
 
-
-
 PRIOR_VACCINATION_RATIO_TARGETS = {
     'child': 1.877,
     'elderly': 14.6,
@@ -1152,13 +1104,11 @@ def simulate_infection_and_recovery(nodes, is_daytime, rng=None, month_params=No
 
     rec_stats = {'total': 0, 'child': 0, 'adult': 0, 'elderly': 0}
 
-
     infected_nodes = [node_id for node_id, node_info in nodes.items()
                       if node_info['health_status'] == 'infected']
 
     for node_id in infected_nodes:
         node_type = nodes[node_id]['type']
-
 
         if node_type == 'child':
             recovery_rate = RECOVERY_CONFIG['children_recovery_rate']
@@ -1260,7 +1210,6 @@ def run_epidemic_simulation(nodes, num_steps=100, display_interval=5, verbose=Fa
     cum_rec_total = cum_rec_child = cum_rec_adult = cum_rec_elderly = 0
 
     for step in range(1, num_steps + 1):
-
         month_idx = (step - 1) // STEPS_PER_MONTH + 1
         month_params = monthly_params.get(month_idx, {}) if monthly_params else {}
         month_params = dict(month_params)
@@ -1276,10 +1225,8 @@ def run_epidemic_simulation(nodes, num_steps=100, display_interval=5, verbose=Fa
         is_daytime = (step % 2 == 1)
         time_period = "Daytime" if is_daytime else "Nighttime"
 
-
         if is_daytime:
             calculate_payoffs(nodes, is_daytime, month_params, step)
-
 
         if not is_daytime:
             vac_new = simulate_vaccination(
@@ -1287,7 +1234,6 @@ def run_epidemic_simulation(nodes, num_steps=100, display_interval=5, verbose=Fa
             )
         else:
             vac_new = {'child': 0, 'adult': 0, 'elderly': 0}
-
 
         rec_st = simulate_infection_and_recovery(
             nodes, is_daytime, rng=rng, month_params=month_params, step=step
@@ -1297,13 +1243,10 @@ def run_epidemic_simulation(nodes, num_steps=100, display_interval=5, verbose=Fa
         cum_rec_adult += rec_st['adult']
         cum_rec_elderly += rec_st['elderly']
 
-
         susceptible_count = sum(1 for node in nodes.values() if node['health_status'] == 'susceptible')
         infected_count = sum(1 for node in nodes.values() if node['health_status'] == 'infected')
         vaccinated_count = sum(1 for node in nodes.values() if node['health_status'] == 'vaccinated')
         recovered_count = cum_rec_total
-
-
 
         child_vaccinated = sum(1 for node in nodes.values()
                                if node['type'] == 'child' and node['health_status'] == 'vaccinated')
@@ -1311,13 +1254,11 @@ def run_epidemic_simulation(nodes, num_steps=100, display_interval=5, verbose=Fa
                              if node['type'] == 'child' and node['health_status'] == 'infected')
         child_recovered = cum_rec_child
 
-
         adult_vaccinated = sum(1 for node in nodes.values()
                                if node['type'] in ['parent', 'single'] and node['health_status'] == 'vaccinated')
         adult_infected = sum(1 for node in nodes.values()
                              if node['type'] in ['parent', 'single'] and node['health_status'] == 'infected')
         adult_recovered = cum_rec_adult
-
 
         elderly_vaccinated = sum(1 for node in nodes.values()
                                  if node['type'] == 'elderly' and node['health_status'] == 'vaccinated')
@@ -1325,17 +1266,11 @@ def run_epidemic_simulation(nodes, num_steps=100, display_interval=5, verbose=Fa
                                if node['type'] == 'elderly' and node['health_status'] == 'infected')
         elderly_recovered = cum_rec_elderly
 
-
-
         school_infected = child_infected if is_daytime else 0
-
 
         company_infected = adult_infected if is_daytime else 0
 
-
         outdoor_infected = elderly_infected if is_daytime else 0
-
-
 
         if not is_daytime:
             family_infected = sum(1 for node in nodes.values()
@@ -1369,10 +1304,8 @@ def run_epidemic_simulation(nodes, num_steps=100, display_interval=5, verbose=Fa
                 'family_infected': family_infected
             })
 
-
     if sample_order is None:
         return time_series_data
-
 
     ordered_data = []
     data_by_step = {entry['step']: entry for entry in time_series_data}
@@ -1400,15 +1333,12 @@ def run_single_simulation_wrapper(args):
         run_index, nodes_template, num_steps, monthly_params, seed_base = args
         policy_half_month_shift = float(SIMULATION_CONFIG.get('policy_half_month_shift', 0.0))
 
-
     simulation_rng = random.Random(seed_base)
-
 
     nodes_copy = {}
     for node_id, node_info in nodes_template.items():
         nodes_copy[node_id] = node_info.copy()
         nodes_copy[node_id]['health_status'] = None
-
 
     nodes_copy, _ = assign_health_status(nodes_copy, rng=simulation_rng)
 
@@ -1585,7 +1515,6 @@ def calculate_monthly_increments(all_time_series_data, num_runs=1, initial_summa
             monthly_increments[m] = row
         return monthly_increments
 
-
     prev_child_vac = 0
     prev_adult_vac = 0
     prev_elderly_vac = 0
@@ -1664,8 +1593,6 @@ def print_monthly_increments(monthly_increments):
         print(f"  Total new infections: {data['total_infected_new']:.2f} people")
 
     print("=" * 100)
-
-
 
 MONTHLY_VAC_REAL_VALUES = {
     'child': [3, 15.6, 31.4, 27.9, 21.8, 2.4, 0.6, 0.2],
@@ -1937,9 +1864,7 @@ def export_to_excel(time_series_data, filename=None, sheet_name=None):
 
     output_dir = OUTPUT_CONFIG['output_dir']
 
-
     if output_dir:
-
         output_dir = os.path.normpath(output_dir)
         try:
             os.makedirs(output_dir, exist_ok=True)
@@ -1951,7 +1876,6 @@ def export_to_excel(time_series_data, filename=None, sheet_name=None):
     else:
         file_path = filename
 
-
     data = {
         'Time step': [data['step'] for data in time_series_data],
         'Infected population': [data['infected'] for data in time_series_data],
@@ -1959,25 +1883,18 @@ def export_to_excel(time_series_data, filename=None, sheet_name=None):
         'Recovered population': [data['recovered'] for data in time_series_data]
     }
 
-
     df = pd.DataFrame(data)
 
-
     try:
-
         file_exists = os.path.exists(file_path)
 
         if file_exists:
-
             from openpyxl import load_workbook
 
-
             if sheet_name is None:
-
                 wb = load_workbook(file_path)
                 existing_sheets = wb.sheetnames
                 wb.close()
-
 
                 max_run = 0
                 for sheet in existing_sheets:
@@ -1990,7 +1907,6 @@ def export_to_excel(time_series_data, filename=None, sheet_name=None):
 
                 sheet_name = f'Run{max_run + 1}'
             else:
-
                 wb = load_workbook(file_path)
                 existing_sheets = wb.sheetnames
                 wb.close()
@@ -2001,34 +1917,25 @@ def export_to_excel(time_series_data, filename=None, sheet_name=None):
                     sheet_name = f'{original_name}_{counter}'
                     counter += 1
 
-
             with pd.ExcelWriter(file_path, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
 
             abs_file_path = os.path.abspath(file_path)
             print(f"Simulation results appended to worksheet '{sheet_name}': {abs_file_path}")
         else:
-
             if sheet_name is None:
                 sheet_name = 'Run1'
 
             df.to_excel(file_path, sheet_name=sheet_name, index=False, engine='openpyxl')
             abs_file_path = os.path.abspath(file_path)
             print(f"Simulation results exported to worksheet '{sheet_name}' in a new file: {abs_file_path}")
-
     except (ModuleNotFoundError, ImportError):
-
-
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         csv_filename = file_path.replace('.xlsx', f'_{timestamp}.csv')
         df.to_csv(csv_filename, index=False, encoding='utf-8-sig')
         abs_file_path = os.path.abspath(csv_filename)
         print(f"Simulation results exported to: {abs_file_path} (CSV format, compatible with Excel)")
         print("Tip: to export directly to a multi-worksheet Excel file, run: pip install openpyxl")
-
-
-
-
 
 
 def calculate_family_distribution():
@@ -2041,31 +1948,23 @@ def calculate_family_distribution():
     G_count = 98
     H_count = 42
 
-
-
     children_used = (E_count * 1 + F_count * 2 + G_count * 1 + H_count * 2)
-
 
     parents_used = (C_count * 2 + E_count * 2 + F_count * 2 + G_count * 2 + H_count * 2)
 
-
     singles_used = A_count * 1
 
-
     elderly_used = (B_count * 1 + D_count * 2 + G_count * 1 + H_count * 1)
-
 
     total_families = A_count + B_count + C_count + D_count + E_count + F_count + G_count + H_count
     total_population = (A_count * 1 + B_count * 1 + C_count * 2 + D_count * 2 +
                         E_count * 3 + F_count * 4 + G_count * 4 + H_count * 5)
     avg_family_size = total_population / total_families if total_families > 0 else 0
 
-
     expected_children = POPULATION_CONFIG['children_count']
     expected_adults = POPULATION_CONFIG['adults_count']
     expected_elderly = POPULATION_CONFIG['elderly_count']
     expected_total = expected_children + expected_adults + expected_elderly
-
 
     parent_pairs = parents_used // 2
     singles = singles_used
@@ -2140,18 +2039,11 @@ def print_family_distribution(family_dist):
     if abs(family_dist['elderly_used'] - family_dist['expected_elderly']) > 0:
         print(f"  Warning: older-adult-count difference: {family_dist['elderly_used'] - family_dist['expected_elderly']} people")
 
-
-
-
-
-
-
 POPULATION_CONFIG = {
     'children_count': 611,
     'adults_count': 1375,
     'elderly_count': 601,
 }
-
 
 NETWORK_CONFIG = {
 
@@ -2180,19 +2072,15 @@ NETWORK_CONFIG = {
     'elderly_connections': (2, 3),
 }
 
-
 INFECTION_CONFIG = {
     'p_single_infection': 0.05,
 }
-
 
 RECOVERY_CONFIG = {
     'children_recovery_rate': 0.07,
     'adults_recovery_rate': 0.10,
     'elderly_recovery_rate': 0.035,
 }
-
-
 
 VACCINE_CONFIG = {
     'antibody_delay_steps_min': 30,
@@ -2202,8 +2090,6 @@ VACCINE_CONFIG = {
     've_elderly': 0.49,
 }
 
-
-
 PRIOR_VACCINATION_CONFIG = {
     'enabled': True,
     'coverage_child': 0.168,
@@ -2211,18 +2097,15 @@ PRIOR_VACCINATION_CONFIG = {
     'coverage_elderly': 0.0097,
 }
 
-
 COST_CONFIG = {
     'infection_cost': 10000,
     'vaccination_cost': 10,
     'recovery_cost': 0,
 }
 
-
 ILI_LAMBDA_DEFAULT_ATTACK_CHILD = 0.127
 ILI_LAMBDA_DEFAULT_ATTACK_ADULT = 0.044
 ILI_LAMBDA_DEFAULT_ATTACK_ELDERLY = 0.072
-
 
 ILI_LAMBDA_FORMULA_CONFIG = {
     "pi_child": 0.15,
@@ -2237,27 +2120,20 @@ ILI_LAMBDA_FORMULA_CONFIG = {
     "calibration_c": 1,
 }
 
-
-
-
-
 ILI_CONFIG = {
     'weekly_csv': os.path.join(PROJECT_DIR, 'data', 'weekly_ili_2026_forecast_inputs.csv'),
     'default_weekly_positivity': 0.25,
 }
-
 
 VACCINATION_FORMULA_PARAMS_CACHE = None
 VACCINATION_ILI_WEEKLY_LOOKUP_CACHE = None
 ILI_AUTONOMOUS_WEEK_CACHE = None
 ILI_WEEKLY_CSV_LOAD_FAILED = False
 
-
 SIMULATION_CONFIG = {
     'num_steps': DEFAULT_SIMULATION_STEPS,
     'network_seed': 42,
 }
-
 
 MONTH_BOUNDARIES = [
     (1, 60),
@@ -2269,7 +2145,6 @@ MONTH_BOUNDARIES = [
     (361, 420),
     (421, 480),
 ]
-
 
 MONTHLY_PARAMS = {
     1: {
@@ -2298,12 +2173,6 @@ MONTHLY_PARAMS = {
     },
 }
 
-
-
-
-
-
-
 FORMULA_PARAMS = {
     "b_child": -2.352,
     "b_adult": -4.698,
@@ -2326,8 +2195,6 @@ FORMULA_PARAMS = {
     ],
 }
 
-
-
 OUTPUT_CONFIG = {
     'output_dir': os.path.join(PROJECT_DIR, 'outputs', 'simulation'),
     'monthly_ci_csv_dir': os.path.join(PROJECT_DIR, 'outputs', 'monthly_ci'),
@@ -2338,7 +2205,6 @@ OUTPUT_CONFIG = {
     'export_monthly_plots': True,
     'export_excel': False,
 }
-
 
 FORECAST_2026_SCENARIO_SPECS = [
     {'id': 'baseline', 'label': 'baseline', 'policy_shift': 0.0, 'policy_factor': 1.0, 'csv_stem': '2026_baseline'},
@@ -2383,7 +2249,6 @@ def build_2026_forecast_scenarios() -> List[Dict[str, Any]]:
             'formula_params': fp,
         })
     return scenarios
-
 
 SURVEY_GROUP_LABELS = {
     'child': 'Children',
@@ -2634,7 +2499,6 @@ def execute_policy_scenario(
 
     print(f"\n{scenario_label}: {num_runs} simulations completed")
 
-
     all_steps = set()
     for data in all_time_series_data:
         all_steps.update(d['step'] for d in data)
@@ -2698,15 +2562,8 @@ def execute_policy_scenario(
         export_to_excel(avg_time_series_data)
     return monthly_increments
 
-
-
-
-
-
-
 if __name__ == "__main__":
     mp.freeze_support()
-
 
     network_rng = random.Random(SIMULATION_CONFIG['network_seed'])
 
