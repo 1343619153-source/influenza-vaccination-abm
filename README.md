@@ -6,7 +6,8 @@ This anonymous repository contains the code and aggregated weekly inputs used fo
 
 - `historical_simulation.py`: historical simulation and baseline analysis.
 - `forecast_2026.py`: forecast and policy-scenario analysis.
-- `parameter_calibration.py`: genetic-algorithm calibration of vaccination parameters.
+- `sarima_baseline.py`: SARIMA forecast benchmark for the 2025/2026 season.
+- `negative_binomial_baseline.py`: nested negative-binomial/Poisson benchmark evaluated on 2025 observations.
 - `data/`: aggregated weekly influenza-like illness (ILI) and positivity-rate inputs.
 - `requirements.txt`: Python dependencies.
 
@@ -48,17 +49,23 @@ Run the forecast and policy scenarios:
 python forecast_2026.py
 ```
 
-Run parameter calibration:
+Run the SARIMA benchmark:
 
 ```bash
-python parameter_calibration.py
+python sarima_baseline.py
 ```
 
-The calibration performs repeated Monte Carlo simulations and may require substantial computation time. Random seeds and simulation settings are defined near the configuration sections of each script.
+Run the negative-binomial benchmark:
+
+```bash
+python negative_binomial_baseline.py
+```
+
+The network simulations and SARIMA grid search may require substantial computation time. Random seeds and simulation settings are defined in each script.
 
 ## Data
 
-The included CSV files contain weekly, aggregated ILI percentages and influenza positivity rates. They do not contain individual-level records. The scripts resolve data paths relative to this repository, so no machine-specific paths need to be configured.
+The included CSV files contain weekly aggregated ILI and positivity rates plus monthly vaccination inputs for the benchmark models. They do not contain individual-level records. All scripts resolve data and output paths relative to this repository, so no machine-specific paths need to be configured.
 
 ## Review status
 

@@ -2,4 +2,6 @@ matplotlib
 numpy
 openpyxl
 pandas
+python-dateutil
 scipy
+statsmodels

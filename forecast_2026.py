@@ -1010,8 +1010,7 @@ def print_prior_vaccination_ratio_diagnostic(
     prior_adult = float(formula_params.get('prior_adult', 0.0))
     print(f"  Adults: prior_adult={prior_adult}; excluded from the ratio comparison.")
     print(
-        "  Note: H varies by month and individual in the simulation; the table is a representative comparison. "
-        "The calibration script applies the same ratio constraint to prior_child and prior_elderly."
+        "  Note: H varies by month and individual in the simulation; the table is a representative comparison."
     )
 
 
