@@ -1,4 +1,4 @@
-# Influenza Vaccination and Transmission ABM
+# Prediction of influenza vaccination uptake
 
 This repository contains the source code and input data for influenza‑vaccination uptake and transmission in Kunshan.
 
