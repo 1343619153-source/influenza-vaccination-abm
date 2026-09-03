@@ -66,7 +66,3 @@ The network simulations and SARIMA grid search may require substantial computati
 ## Data
 
 The included CSV files contain weekly aggregated ILI and positivity rates plus monthly vaccination inputs for the benchmark models. They do not contain individual-level records. All scripts resolve data and output paths relative to this repository, so no machine-specific paths need to be configured.
-
-## Review status
-
-Author names, affiliations, manuscript title, acknowledgements, citation metadata, and repository license are intentionally omitted during double-blind review. They should be added when the repository is made public after peer review.
