@@ -1,6 +1,6 @@
 # Influenza Vaccination and Transmission ABM
 
-This anonymous repository contains the code and aggregated weekly inputs used for an agent-based model (ABM) of influenza vaccination and transmission in Kunshan. It is provided for double-blind peer review.
+This repository contains the source code and input data for influenza‑vaccination uptake and transmission in Kunshan.
 
 ## Repository contents
 
